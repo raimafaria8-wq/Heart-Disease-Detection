@@ -1,0 +1,6 @@
+epoch,train_loss,val_loss,train_accuracy,val_accuracy,learning_rate,gradient_norm
+1,1.21,1.1,68,65,0.0001,2.1
+2,0.95,0.88,75,73,0.0001,1.8
+3,0.72,0.7,82,80,1e-05,1.5
+4,0.55,0.51,88,86,1e-05,1.2
+5,0.42,0.45,92,89,1e-06,1.0

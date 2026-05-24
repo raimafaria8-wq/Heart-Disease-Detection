@@ -1,0 +1,22 @@
+model:
+  name: DenseNet121
+  pretrained: true
+  num_classes: 5
+  dropout: 0.3
+
+training:
+  batch_size: 16
+  epochs: 10
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  gradient_clip: 1.0
+  mixed_precision: true
+
+scheduler:
+  name: StepLR
+  step_size: 3
+  gamma: 0.1
+
+checkpoint:
+  save_dir: ./checkpoints
+  best_model_name: best_model.pt
