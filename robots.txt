@@ -1,0 +1,17 @@
+# Applies rules to all search engine crawlers
+User-agent: *
+
+# Allow all pages of the website to be crawled
+Allow: /
+
+# Block the admin panel from search engines
+Disallow: /admin/
+
+# Block the staff login area from indexing
+Disallow: /staff-login/
+
+# Block private student results section
+Disallow: /results/private/
+
+# Sitemap location for search engines
+Sitemap: https://alnooracademy.edu.pk/sitemap.xml

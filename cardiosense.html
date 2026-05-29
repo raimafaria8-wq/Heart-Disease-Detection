@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardioSense AI - Phase 6 Multi-Modal Chest Diagnostics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Add jsPDF for reports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* Existing styles from file:1 - abbreviated for brevity; paste full CSS here */
+        root { --bg: #0a0f1e; /* ... full vars */ }
+        /* Add new for imaging */
+        .upload-zone { border: 2px dashed var(--border); padding: 40px; text-align: center; transition: all 0.3s; }
+        .upload-zone.dragover { border-color: var(--accent); background: rgba(232,64,64,0.05); }
+        canvas { max-width: 100%; border-radius: 8px; }
+        .heatmap { position: relative; }
+        .heatmap-overlay { position: absolute; top: 0; left: 0; pointer-events: none; mix-blend-mode: multiply; }
+        .disease-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .disease-card { padding: 16px; border-radius: 8px; text-align: center; }
+        .disease-high { background: rgba(232,64,64,0.15); color: var(--accent2); }
+        /* Full CSS from your original + new rules */
+        /* ... (insert full CSS from file:1 here, add above) */
+    </style>
+</head>
+<body>
+    <!-- Existing header/tabs, update badge to Phase 6 Multi-Modal -->
+    <header><!-- ... --></header>
+    <main>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('predict', this)">Patient Prediction</button>
+            <button class="tab" onclick="switchTab('imaging', this)">Imaging Analysis</button>
+            <button class="tab" onclick="switchTab('notes', this)">Doctor Notes</button>
+            <button class="tab" onclick="switchTab('metrics', this)">Model Metrics</button>
+            <button class="tab" onclick="switchTab('about', this)">Project Overview</button>
+        </div>
+
+        <!-- Existing predict tab + new sections -->
+        <div id="tab-predict" class="panel active"><!-- Existing form --></div>
+
+        <!-- New Imaging Tab -->
+        <div id="tab-imaging" class="panel">
+            <div class="section-title">Imaging Diagnostics</div>
+            <div class="section-sub">Upload X-ray/ECG for AI analysis (sim ViT/CNN)</div>
+            <div class="panel-grid" style="grid-template-columns: 1fr 1fr; gap: 28px;">
+                <div class="card">
+                    <div class="upload-zone" id="xray-upload" onclick="document.getElementById('xray-file').click()">
+                        <input type="file" id="xray-file" accept="image/*" style="display:none;" onchange="analyzeImage(this, 'xray')">
+                        <div>📸 Chest X-Ray</div>
+                        <div style="color:var(--muted);">Drop image or click</div>
+                    </div>
+                    <canvas id="xray-canvas" style="display:none;"></canvas>
+                    <div id="xray-results" style="display:none;"></div>
+                </div>
+                <div class="card">
+                    <div class="upload-zone" id="ecg-upload" onclick="document.getElementById('ecg-file').click()">
+                        <input type="file" id="ecg-file" accept="image/*" style="display:none;" onchange="analyzeImage(this, 'ecg')">
+                        <div>📈 ECG Strip</div>
+                    </div>
+                    <canvas id="ecg-canvas" style="display:none;"></canvas>
+                    <div id="ecg-results"></div>
+                </div>
+            </div>
+            <div class="disease-grid" id="disease-probs" style="margin-top:20px;"></div>
+        </div>
+
+        <!-- New Notes Tab -->
+        <div id="tab-notes" class="panel">
+            <div class="section-title">Doctor's Notes Analysis</div>
+            <textarea id="notes-text" placeholder="Enter doctor's notes..." style="width:100%; height:200px; background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px; color:var(--text);"></textarea>
+            <button class="btn-predict" onclick="analyzeNotes()">Analyze Notes</button>
+            <div id="notes-results"></div>
+        </div>
+
+        <!-- Existing metrics/about tabs -->
+        <div id="tab-metrics" class="panel"><!-- ... --></div>
+        <div id="tab-about" class="panel">
+            <!-- Update to Phase 6: Multi-modal (X-ray, ECG img, notes), diseases: heart/pneumonia/etc. -->
+        </div>
+    </main>
+
+    <script>
+        // Existing JS from file:1
+        // New functions
+        function analyzeImage(input, type) {
+            const file = input.files[0];
+            const canvas = document.getElementById(type + '-canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = () => {
+                canvas.width = 224; canvas.height = 224;
+                ctx.drawImage(img, 0, 0, 224, 224);
+                // Simulate CNN: avg pixel intensity for "opacity"
+                const data = ctx.getImageData(0,0,224,224).data;
+                let opacity = 0; for(let i=0; i<data.length; i+=4) opacity += data[i]; opacity /= (224*224*255);
+                const probs = type === 'xray' ? {cardiomegaly: 0.12 + opacity*0.3, pneumonia: 0.45 * opacity, effusion: 0.08} : {arrhythmia: 0.22 + Math.random()*0.4};
+                displayImageResults(type, canvas, probs);
+            };
+            img.src = URL.createObjectURL(file);
+        }
+
+        function displayImageResults(type, canvas, probs) {
+            document.getElementById(type + '-results').innerHTML = `
+                <div class="heatmap">
+                    ${canvas.outerHTML}
+                    <canvas class="heatmap-overlay" width="224" height="224" style="background: radial-gradient(circle at ${Math.random()*200}px ${Math.random()*200}px, red 0%, transparent 70%); opacity:0.6;"></canvas>
+                </div>
+                <div style="margin-top:10px;">Sim Grad-CAM Heatmap [web:9]</div>
+            `;
+            canvas.style.display = 'block';
+            updateDiseaseProbs(probs);
+        }
+
+        function analyzeNotes() {
+            const text = document.getElementById('notes-text').value.toLowerCase();
+            const risks = {chest: text.includes('chest'), pain: text.includes('pain'), murmur: text.includes('murmur')};
+            let noteScore = Object.values(risks).filter(Boolean).length * 0.15;
+            document.getElementById('notes-results').innerHTML = `<div>Risk from notes: ${Math.round(noteScore*100)}% (keywords: ${Object.keys(risks).filter(k => risks[k]).join(', ')})</div>`;
+            // Integrate to main risk
+        }
+
+        function updateDiseaseProbs(probs) {
+            const grid = document.getElementById('disease-probs');
+            grid.innerHTML = Object.entries(probs).map(([d, p]) => `
+                <div class="disease-card ${p>0.3 ? 'disease-high' : ''}">
+                    <div style="font-size:24px;font-weight:600;">${Math.round(p*100)}%</div>
+                    <div>${d.charAt(0).toUpperCase() + d.slice(1)}</div>
+                </div>
+            `).join('');
+        }
+
+        // Update runPrediction to include imaging/notes: finalRisk += imgScore + noteScore;
+        // Add PDF export
+        function generateReport() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text('CardioSense Phase 6 Report', 20, 20);
+            // Add risk, probs, etc.
+            doc.save('diagnosis.pdf');
+        }
+
+        // Extend switchTab, init with new tabs
+        // Full JS: paste original + new
+    </script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+<?php
+echo "RUNNING FROM CORRECT FILE";
+?>
